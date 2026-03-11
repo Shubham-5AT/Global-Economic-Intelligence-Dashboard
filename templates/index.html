@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Global Economic Intelligence Dashboard</title>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+
+body{
+background:#141414;
+color:white;
+font-family:Arial;
+text-align:center;
+margin:0;
+}
+
+h1{
+color:#e50914;
+padding:20px;
+}
+
+select{
+padding:10px;
+margin:20px;
+font-size:16px;
+background:#222;
+color:white;
+border:1px solid #e50914;
+}
+
+.container{
+width:90%;
+margin:auto;
+}
+
+.chart-box{
+background:#1f1f1f;
+padding:20px;
+margin:30px auto;
+border-radius:10px;
+width:80%;
+}
+
+canvas{
+background:#111;
+padding:10px;
+border-radius:10px;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<h1>Global Economic Intelligence Dashboard</h1>
+
+<select id="countrySelect"></select>
+
+<div class="container">
+
+<div class="chart-box">
+<h2>GDP Growth</h2>
+<canvas id="gdpChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h2>CO2 Emissions</h2>
+<canvas id="co2Chart"></canvas>
+</div>
+
+<div class="chart-box">
+<h2>Life Expectancy</h2>
+<canvas id="lifeChart"></canvas>
+</div>
+
+<div class="chart-box">
+<h2>Unemployment Rate</h2>
+<canvas id="unemploymentChart"></canvas>
+</div>
+
+</div>
+
+<script>
+
+fetch("http://127.0.0.1:8000/data")
+
+.then(res => res.json())
+
+.then(data => {
+
+const select = document.getElementById("countrySelect")
+
+const countries = [...new Set(data.map(row => row.Country))]
+
+countries.forEach(country=>{
+const option=document.createElement("option")
+option.value=country
+option.text=country
+select.appendChild(option)
+})
+
+let gdpChart
+let co2Chart
+let lifeChart
+let unemploymentChart
+
+function updateCharts(country){
+
+const filtered=data.filter(row=>row.Country===country)
+
+const years=filtered.map(row=>row.Year)
+
+const gdp=filtered.map(row=>row.GDP_USD)
+
+const co2=filtered.map(row=>row.CO2_Emissions_metric_tons_per_capita)
+
+const life=filtered.map(row=>row.Life_Expectancy)
+
+const unemployment=filtered.map(row=>parseFloat(row["Unemployment_Rate_%"]))
+
+/* destroy previous charts */
+
+if(gdpChart) gdpChart.destroy()
+if(co2Chart) co2Chart.destroy()
+if(lifeChart) lifeChart.destroy()
+if(unemploymentChart) unemploymentChart.destroy()
+
+/* GDP Chart */
+
+gdpChart=new Chart(
+document.getElementById("gdpChart"),
+{
+type:"line",
+data:{
+labels:years,
+datasets:[{
+label:"GDP (USD)",
+data:gdp,
+borderColor:"#e50914",
+backgroundColor:"rgba(229,9,20,0.3)",
+tension:0.3
+}]
+}
+})
+
+/* CO2 Chart */
+
+co2Chart=new Chart(
+document.getElementById("co2Chart"),
+{
+type:"line",
+data:{
+labels:years,
+datasets:[{
+label:"CO2 Emissions",
+data:co2,
+borderColor:"#00c3ff",
+backgroundColor:"rgba(0,195,255,0.3)",
+tension:0.3
+}]
+}
+})
+
+/* Life Expectancy */
+
+lifeChart=new Chart(
+document.getElementById("lifeChart"),
+{
+type:"line",
+data:{
+labels:years,
+datasets:[{
+label:"Life Expectancy",
+data:life,
+borderColor:"#4caf50",
+backgroundColor:"rgba(76,175,80,0.3)",
+tension:0.3
+}]
+}
+})
+
+/* Unemployment Chart */
+
+unemploymentChart=new Chart(
+document.getElementById("unemploymentChart"),
+{
+type:"line",
+data:{
+labels:years,
+datasets:[{
+label:"Unemployment Rate %",
+data:unemployment,
+borderColor:"#ffc107",
+backgroundColor:"rgba(255,193,7,0.3)",
+tension:0.3
+}]
+}
+})
+
+}
+
+/* initial chart */
+
+updateCharts(countries[0])
+
+/* dropdown change */
+
+select.addEventListener("change",()=>{
+updateCharts(select.value)
+})
+
+})
+
+</script>
+
+</body>
+</html>
